@@ -19,6 +19,7 @@ struct event_base* base;
 static MYSQL *conn;
 
 void update_mysql_server(char *data_string);
+void printf_buf(char *buf, int len);
 
 void onRead(int iCliFd, short iEvent, void *arg)
 {
