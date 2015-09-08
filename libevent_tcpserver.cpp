@@ -39,8 +39,20 @@ void onRead(int iCliFd, short iEvent, void *arg)
     }
 
     buf[iLen] = 0;
-    printf("RECV: %s\n", buf);
+    printf("RECV DATA:\n");
+    printf_buf(buf, iLen);
     //update_mysql_server(buf);
+}
+
+void printf_buf(char *buf, int len)
+{
+    for (int i = 0; i < len; i++) {
+        if (i % 16 == 0) {
+            printf("\n");
+        }
+        printf("%2X ", buf[i]);
+    }
+    printf("\n");
 }
 
 void update_mysql_server(char *data_string)
@@ -109,7 +121,7 @@ int main()
     event_set(&evListen, iSvrFd, EV_READ|EV_PERSIST, onAccept, NULL);
     event_base_set(base, &evListen);
     event_add(&evListen, NULL);
-    printf("program start\n");
+    printf("program start...\n");
     event_base_dispatch(base);
 
     return 0;
