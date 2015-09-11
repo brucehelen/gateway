@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>ABB6C5E1-A12D-4D58-BF90-998E53938A99</string>
+	<key>IDESourceControlProjectName</key>
+	<string>libevent_server</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>040751B30BABAF6949DC9F7EB9E05E7A90EE96FD</key>
+		<string>github.com:brucehelen/gateway.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>libevent_server.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>040751B30BABAF6949DC9F7EB9E05E7A90EE96FD</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>github.com:brucehelen/gateway.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>040751B30BABAF6949DC9F7EB9E05E7A90EE96FD</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>040751B30BABAF6949DC9F7EB9E05E7A90EE96FD</string>
+			<key>IDESourceControlWCCName</key>
+			<string>gateway</string>
+		</dict>
+	</array>
+</dict>
+</plist>
