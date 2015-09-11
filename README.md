@@ -8,6 +8,7 @@ gateway server
 
 一、使用Xcode进行编译
 直接打开工程即可
+
 二、在linux下面编译
 
 ```bash
