@@ -26,13 +26,19 @@
 #include "class_code_handle.h"
 #include "watch_information.h"
 
+#include <syslog.h>
+
 // mysql
 static MYSQL *conn;
+// log file
+logfile_t g_logfile;
 
 #define LISTEN_PORT     8081
 #define LISTEN_BACKLOG  50
 // 分配在栈中的内存
 #define RECV_BUF_SIZE   512
+
+#define LOG_FILE_PATH   "/tmp/gateway.log"
 
 #define handle_error(msg) \
         do { perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -178,20 +184,12 @@ accept_error_cb(struct evconnlistener *listener, void *ctx)
 static void
 show_program_start_info(struct event_base *base)
 {
-    enum event_method_feature f;
+    printf("\n---- Program start ----\n");
 
-    printf("---- Program start ----\n");
+    syslog(LOG_USER|LOG_INFO, "syslog test message generated in program\n");
 
-    printf("Using Libevent with backend method %s.",
+    printf("Using Libevent with backend method %s.\n",
            event_base_get_method(base));
-    f = event_base_get_features(base);
-    if ((f & EV_FEATURE_ET))
-        printf("  Edge-triggered events are supported.");
-    if ((f & EV_FEATURE_O1))
-        printf("  O(1) event notification is supported.");
-    if ((f & EV_FEATURE_FDS))
-        printf("  All FD types are supported.");
-    printf("\n");
 }
 
 int
@@ -200,6 +198,9 @@ main(int argc, char **argv)
     struct event_base *base;
     struct evconnlistener *listener;
     struct sockaddr_in sin;
+
+    // log file
+    g_logfile.logfile_name = LOG_FILE_PATH;
 
     base = event_base_new();
     if (!base) handle_error("Couldn't open event base");
@@ -223,6 +224,9 @@ main(int argc, char **argv)
 
     show_program_start_info(base);
     event_base_dispatch(base);
+
+    evconnlistener_free(listener);
+    event_base_free(base);
 
     return 0;
 }
