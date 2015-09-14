@@ -12,12 +12,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <event.h>
-#include "logfile.h"
 
 struct watch_information {
     struct sockaddr_in in_address;      // 手表的IP地址
     struct bufferevent *bev;            // socket buffer
-    logfile_t *logfile;                 // log记录文件
 };
 
 typedef struct watch_information watch_information;

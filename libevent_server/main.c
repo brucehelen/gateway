@@ -16,6 +16,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#include <syslog.h>
 
 #include <mysql.h>
 #include <event.h>
@@ -26,19 +27,13 @@
 #include "class_code_handle.h"
 #include "watch_information.h"
 
-#include <syslog.h>
-
 // mysql
 static MYSQL *conn;
-// log file
-logfile_t g_logfile;
 
 #define LISTEN_PORT     8081
 #define LISTEN_BACKLOG  50
-// 分配在栈中的内存
+// 接收到数据，分配在栈中的内存大小
 #define RECV_BUF_SIZE   512
-
-#define LOG_FILE_PATH   "/tmp/gateway.log"
 
 #define handle_error(msg) \
         do { perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -47,10 +42,11 @@ logfile_t g_logfile;
         do { printf(msg); } while(0)
 
 
-void update_mysql_server(char *data_string)
+void
+update_mysql_server(char *data_string)
 {
     char buf[1024];
-    
+
     // insert into sensor values (0, now(), 'Hello world');
     snprintf(buf, 1024, "insert into sensor values (0, now(), '%s')", data_string);
     if (mysql_query(conn, buf)) {
@@ -59,7 +55,8 @@ void update_mysql_server(char *data_string)
     }
 }
 
-void connect_to_mysqlserver()
+void
+connect_to_mysqlserver()
 {
     char server[] = "localhost";
     char user[] = "root";
@@ -103,21 +100,6 @@ recv_read_cb(struct bufferevent *bev, void *ctx)
             handle_recv_data(recv_buf, len, ctx);
         }
     }
-
-    /* Copy all the data from the input buffer to the output buffer. */
-    //evbuffer_add_buffer(output, input);
-}
-
-/**
- *  是否发送完成
- *
- *  @param bev bufferevent
- *  @param ctx 附加信息
- */
-static void
-write_cb(struct bufferevent *bev, void *ctx)
-{
-    
 }
 
 static void
@@ -131,7 +113,13 @@ event_cb(struct bufferevent *bev, short events, void *ctx)
 
     // disconnect
     if (events & (BEV_EVENT_READING | BEV_EVENT_EOF)) {
-        printf("%s:%d disconnect\n", inet_ntoa(in_address->sin_addr), in_address->sin_port);
+        printf("%s:%d disconnect\n",
+               inet_ntoa(in_address->sin_addr),
+               in_address->sin_port);
+        syslog(LOG_INFO, "%s:%d disconnect\n",
+               inet_ntoa(in_address->sin_addr),
+               in_address->sin_port);
+
         free(ctx);
     }
 }
@@ -166,7 +154,11 @@ accept_conn_cb(struct evconnlistener *listener,
            inet_ntoa(watch_info->in_address.sin_addr),
            watch_info->in_address.sin_port);
 
-    bufferevent_setcb(bev, recv_read_cb, write_cb, event_cb, (void *)watch_info);
+    syslog(LOG_USER | LOG_INFO, "%s:%d Connect\n",
+           inet_ntoa(watch_info->in_address.sin_addr),
+           watch_info->in_address.sin_port);
+
+    bufferevent_setcb(bev, recv_read_cb, NULL, event_cb, (void *)watch_info);
     bufferevent_enable(bev, EV_READ|EV_WRITE);
 }
 
@@ -184,10 +176,9 @@ accept_error_cb(struct evconnlistener *listener, void *ctx)
 static void
 show_program_start_info(struct event_base *base)
 {
+    syslog(LOG_USER|LOG_INFO, "---- Program start ----");
+
     printf("\n---- Program start ----\n");
-
-    syslog(LOG_USER|LOG_INFO, "syslog test message generated in program\n");
-
     printf("Using Libevent with backend method %s.\n",
            event_base_get_method(base));
 }
@@ -198,9 +189,6 @@ main(int argc, char **argv)
     struct event_base *base;
     struct evconnlistener *listener;
     struct sockaddr_in sin;
-
-    // log file
-    g_logfile.logfile_name = LOG_FILE_PATH;
 
     base = event_base_new();
     if (!base) handle_error("Couldn't open event base");
@@ -227,6 +215,8 @@ main(int argc, char **argv)
 
     evconnlistener_free(listener);
     event_base_free(base);
+
+    syslog(LOG_USER|LOG_ERR, "---- exit ----");
 
     return 0;
 }
