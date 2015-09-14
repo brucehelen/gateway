@@ -19,9 +19,6 @@
 
 ```bash
 $ cd libevent_server
-```
-
-```bash
 $ make
 ```
 
