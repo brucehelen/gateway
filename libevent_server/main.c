@@ -17,8 +17,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <syslog.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+#include <signal.h>
 
-#include <mysql.h>
 #include <event.h>
 #include <event2/listener.h>
 #include <event2/bufferevent.h>
@@ -27,8 +30,6 @@
 #include "class_code_handle.h"
 #include "watch_information.h"
 
-// mysql
-static MYSQL *conn;
 
 #define LISTEN_PORT     8081
 #define LISTEN_BACKLOG  50
@@ -40,38 +41,6 @@ static MYSQL *conn;
 
 #define handle_infomation(msg) \
         do { printf(msg); } while(0)
-
-
-void
-update_mysql_server(char *data_string)
-{
-    char buf[1024];
-
-    // insert into sensor values (0, now(), 'Hello world');
-    snprintf(buf, 1024, "insert into sensor values (0, now(), '%s')", data_string);
-    if (mysql_query(conn, buf)) {
-        printf("insert into sensor table error: %s\n", mysql_error(conn));
-        exit(1);
-    }
-}
-
-void
-connect_to_mysqlserver()
-{
-    char server[] = "localhost";
-    char user[] = "root";
-    char password[] = "142336";
-    char database[] = "gateway";
-
-    conn = mysql_init(NULL);
-
-    if (!mysql_real_connect(conn, server, user, password, database, 0, NULL, 0)) {
-        printf("mysql connect error: %s\n", mysql_error(conn));
-        exit(1);
-    } else {
-        printf("Connect mysql server ok\n");
-    }
-}
 
 /**
  *  接收数据事件
@@ -113,9 +82,10 @@ event_cb(struct bufferevent *bev, short events, void *ctx)
 
     // disconnect
     if (events & (BEV_EVENT_READING | BEV_EVENT_EOF)) {
-        printf("%s:%d disconnect\n",
+        printf("%s:%d disconnect",
                inet_ntoa(in_address->sin_addr),
                in_address->sin_port);
+
         syslog(LOG_INFO, "%s:%d disconnect\n",
                inet_ntoa(in_address->sin_addr),
                in_address->sin_port);
@@ -142,6 +112,8 @@ accept_conn_cb(struct evconnlistener *listener,
 {
     struct event_base *base = evconnlistener_get_base(listener);
     struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+
+    // malloc new memory, don't forget to free
     watch_information *watch_info = (watch_information *)malloc(sizeof(watch_information));
     if (bev == NULL || watch_info == NULL) {
         handle_infomation("memory low error\n");
@@ -150,11 +122,8 @@ accept_conn_cb(struct evconnlistener *listener,
 
     memcpy(&watch_info->in_address, address, sizeof(struct sockaddr_in));
     watch_info->bev = bev;
-    printf("%s:%d Connect\n",
-           inet_ntoa(watch_info->in_address.sin_addr),
-           watch_info->in_address.sin_port);
 
-    syslog(LOG_USER | LOG_INFO, "%s:%d Connect\n",
+    syslog(LOG_INFO, "%s:%d Connect\n",
            inet_ntoa(watch_info->in_address.sin_addr),
            watch_info->in_address.sin_port);
 
@@ -167,8 +136,10 @@ accept_error_cb(struct evconnlistener *listener, void *ctx)
 {
     struct event_base *base = evconnlistener_get_base(listener);
     int err = EVUTIL_SOCKET_ERROR();
-    fprintf(stderr, "Got an error %d (%s) on the listener. "
-            "Shutting down.\n", err, evutil_socket_error_to_string(err));
+    syslog(LOG_ERR,
+           "Got an error %d (%s) on the listener. Shutting down",
+           err,
+           evutil_socket_error_to_string(err));
 
     event_base_loopexit(base, NULL);
 }
@@ -176,11 +147,63 @@ accept_error_cb(struct evconnlistener *listener, void *ctx)
 static void
 show_program_start_info(struct event_base *base)
 {
-    syslog(LOG_USER|LOG_INFO, "---- Program start ----");
-
-    printf("\n---- Program start ----\n");
-    printf("Using Libevent with backend method %s.\n",
+    syslog(LOG_INFO, "---- Program start ----");
+    syslog(LOG_INFO, "Using Libevent with backend method %s",
            event_base_get_method(base));
+}
+
+static void
+daemonize(const char *cmd)
+{
+    int                 i, fd0, fd1, fd2;
+    pid_t               pid;
+    struct rlimit       rl;
+    struct sigaction    sa;
+
+    umask(0);
+
+    if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
+        handle_error("can't get file limit");
+    }
+
+    // Become a session leader to lose controlling TTY.
+    if ((pid = fork()) < 0) {
+        handle_error("fork error");
+    } else if (pid != 0) {      // parent
+        exit(0);
+    }
+    setsid();
+
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGHUP, &sa, NULL) < 0) {
+        handle_error("can't ignore SIGHUP");
+    }
+    if ((pid = fork()) < 0) {
+        handle_error("can't fork");
+    } else if (pid != 0)
+        exit(0);
+
+    if (chdir("/") < 0) {
+        handle_error("can't change directory to /");
+    }
+
+    // close all open file descriptors
+    if (rl.rlim_max == RLIM_INFINITY)
+        rl.rlim_max = 1024;
+    for (i = 0; i < rl.rlim_max; i++)
+        close(i);
+
+    fd0 = open("/dev/null", O_RDWR);
+    fd1 = dup(0);
+    fd2 = dup(0);
+
+    openlog(cmd, LOG_CONS, LOG_DAEMON);
+    if (fd0 != 0 || fd1 != 1 || fd2 != 2) {
+        syslog(LOG_ERR, "unexpected file descriptors %d, %d, %d", fd0, fd1, fd2);
+        exit(1);
+    }
 }
 
 int
@@ -189,6 +212,9 @@ main(int argc, char **argv)
     struct event_base *base;
     struct evconnlistener *listener;
     struct sockaddr_in sin;
+
+    // 调试时可以先不以守护进行的方式运行
+    //daemonize("gateway");
 
     base = event_base_new();
     if (!base) handle_error("Couldn't open event base");
@@ -206,7 +232,7 @@ main(int argc, char **argv)
     listener = evconnlistener_new_bind(base, accept_conn_cb, NULL,
                                        LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1,
                                        (struct sockaddr*)&sin, sizeof(sin));
-    if (!listener) handle_error("Couldn't create evconnlistener");
+    if (!listener) syslog(LOG_ERR, "Couldn't create evconnlistener");
 
     evconnlistener_set_error_cb(listener, accept_error_cb);
 
@@ -216,7 +242,7 @@ main(int argc, char **argv)
     evconnlistener_free(listener);
     event_base_free(base);
 
-    syslog(LOG_USER|LOG_ERR, "---- exit ----");
+    syslog(LOG_ERR, "---- exit ----");
 
     return 0;
 }

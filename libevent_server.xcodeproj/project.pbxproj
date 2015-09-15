@@ -11,6 +11,7 @@
 		32A69C6D1BA1879100484958 /* class_code_handle.c in Sources */ = {isa = PBXBuildFile; fileRef = 32A69C6B1BA1879100484958 /* class_code_handle.c */; };
 		7A68563B1BA6BC80000A1AC9 /* code_0x40_handle.c in Sources */ = {isa = PBXBuildFile; fileRef = 7A6856391BA6BC80000A1AC9 /* code_0x40_handle.c */; };
 		7A68563E1BA6C0B0000A1AC9 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = 7A68563C1BA6C0B0000A1AC9 /* common.c */; };
+		7A6856411BA7AD21000A1AC9 /* mysql_server_helper.c in Sources */ = {isa = PBXBuildFile; fileRef = 7A68563F1BA7AD21000A1AC9 /* mysql_server_helper.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -36,6 +37,8 @@
 		7A68563A1BA6BC80000A1AC9 /* code_0x40_handle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = code_0x40_handle.h; sourceTree = "<group>"; };
 		7A68563C1BA6C0B0000A1AC9 /* common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = common.c; sourceTree = "<group>"; };
 		7A68563D1BA6C0B0000A1AC9 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		7A68563F1BA7AD21000A1AC9 /* mysql_server_helper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mysql_server_helper.c; sourceTree = "<group>"; };
+		7A6856401BA7AD21000A1AC9 /* mysql_server_helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mysql_server_helper.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +80,8 @@
 				32A69C6C1BA1879100484958 /* class_code_handle.h */,
 				7A6856391BA6BC80000A1AC9 /* code_0x40_handle.c */,
 				7A68563A1BA6BC80000A1AC9 /* code_0x40_handle.h */,
+				7A68563F1BA7AD21000A1AC9 /* mysql_server_helper.c */,
+				7A6856401BA7AD21000A1AC9 /* mysql_server_helper.h */,
 			);
 			path = libevent_server;
 			sourceTree = "<group>";
@@ -140,6 +145,7 @@
 				32A683B31B9FDB4A00484958 /* main.c in Sources */,
 				32A69C6D1BA1879100484958 /* class_code_handle.c in Sources */,
 				7A68563E1BA6C0B0000A1AC9 /* common.c in Sources */,
+				7A6856411BA7AD21000A1AC9 /* mysql_server_helper.c in Sources */,
 				7A68563B1BA6BC80000A1AC9 /* code_0x40_handle.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
