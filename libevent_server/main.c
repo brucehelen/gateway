@@ -214,7 +214,7 @@ main(int argc, char **argv)
     struct sockaddr_in sin;
 
     // 调试时可以先不以守护进行的方式运行
-    //daemonize("gateway");
+    daemonize("gateway");
 
     base = event_base_new();
     if (!base) handle_error("Couldn't open event base");
