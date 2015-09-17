@@ -5,8 +5,8 @@
 
 var net = require('net');
 
-//var HOST = '222.92.133.154';
-var HOST = '127.0.0.1';
+var HOST = '222.92.133.154';
+//var HOST = '127.0.0.1';
 var PORT = 8081;
 
 var client = new net.Socket();
@@ -14,15 +14,15 @@ client.connect(PORT, HOST, function() {
     console.log('Connect to: ' + HOST + ':' + PORT);
 
     var i = 0;
-    // 33 bytes
-    var buf = new Buffer(33);
+    // 25 bytes
+    var buf = new Buffer(25);
 
     // header
     buf[i++] = 0x02;
     buf[i++] = 0x55;
     buf[i++] = 0xAA;
     buf[i++] = 0x00;
-    buf[i++] = 0x21;
+    buf[i++] = 0x19;
 
     // code type
     buf[i++] = 0x40;
